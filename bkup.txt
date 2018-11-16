@@ -1,0 +1,719 @@
+$(document).ready(function() {
+
+    if ($(".load-account-datatable").length != 0) {
+        var $accountselectortable = $('#account-selector-table-more-than-5');
+        // sitecore has to comment this line var _manageAccountApiUrl
+        // var _manageAccountApiUrl = "../../../src/js/data/account-selector/document-history2.json";
+
+        if (typeof _manageAccountApiUrl != "undefined") {
+
+            var _manageAccountUrl = _manageAccountApiUrl;
+            var words = [];
+            var dataSrc = [];
+
+
+            var uniqueDocument = [];
+            //commneting this    
+
+            function renderAccountSelectorData() {
+                $("#daccount-selector-wrapper").removeClass("hide");
+                $("#no-account-selector").addClass("hide");
+                // $.ajax({
+                //     url: _manageAccountUrl,
+                //     success: function(data) {
+                //         // if (data.accountselector.length == 0) {
+                //         //     $("#account-selector-wrapper").addClass("hide");
+                //         //     $("#no-account-selector").removeClass("hide");
+                //         // }
+                //     }
+                // });
+
+                function getMailingAddress(data, type, row) {
+                    if (data.ServiceAddress  ==  null) {                     
+                        return "<div> NA </div>";
+                    } else if (data.ServiceAddress.Line_1.trim() == "" && data.ServiceAddress.Line_2.trim() == "" && data.ServiceAddress.City.trim() == "" && data.ServiceAddress.State.trim() == "" && data.ServiceAddress.Postal_Code.trim() == "" && data.ServiceAddress.Care_Of == null) {
+                        return "<div> NA </div>";
+                    } // these condition is only when othes values empty only carefof having null values 
+                    else if (data.ServiceAddress.Line_1.trim() == "" && data.ServiceAddress.Line_2.trim() == "" && data.ServiceAddress.City.trim() == "" && data.ServiceAddress.State.trim() == "" && data.ServiceAddress.Postal_Code.trim() == "" && data.ServiceAddress.Care_Of.trim() == "") {
+                        return "<div> NA </div>";
+                    } // checking empty values
+                    else if (data.ServiceAddress.Line_1 == null && data.ServiceAddress.Line_2 == null && data.ServiceAddress.City == null && data.ServiceAddress.State == null && data.ServiceAddress.Postal_Code == null && data.ServiceAddress.Care_Of == null) {
+                        return "<div> NA </div>";
+                    } // checking null values
+                    else if ((data.ServiceAddress.Line_2.trim() == "" && data.ServiceAddress.Care_Of == "") || (data.ServiceAddress.Line_2.trim() == "" && data.ServiceAddress.Care_Of == null)) {
+                        return '<div>' + data.ServiceAddress.Line_1 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + '</div>';
+                    } else if (data.ServiceAddress.Line_1.trim() == "" && data.ServiceAddress.Line_2.trim() == "") {
+                        return '<div>' + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + "" + data.ServiceAddress.Postal_Code + "" + data.ServiceAddress.Care_Of + '</div>';                
+                    } else if (data.ServiceAddress.Line_1 ==  null && data.ServiceAddress.Line_2 == null) {
+                        return '<div>' + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';
+                    } else if (data.ServiceAddress.Line_1 ==  null || data.ServiceAddress.Line_1.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';
+                    } else if (data.ServiceAddress.Line_2 ==  null || data.ServiceAddress.Line_2.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';                
+                    } else if (data.ServiceAddress.City  ==  null || data.ServiceAddress.City.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';
+                    } else if (data.ServiceAddress.State ==  null || data.ServiceAddress.State.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';
+                    } else if (data.ServiceAddress.Country ==  null || data.ServiceAddress.Country.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';                
+                    } else if (data.ServiceAddress.Postal_Code ==  null || data.ServiceAddress.Postal_Code.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Care_Of + '</div>';
+                    } else if (data.ServiceAddress.Care_Of == null || data.ServiceAddress.Care_Of.trim() == "") {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + '</div>';
+                    } else {
+                        return '<div>' + data.ServiceAddress.Line_1 + " " + data.ServiceAddress.Line_2 + "" + ', ' + "" + data.ServiceAddress.City + "" + ', ' + "" + data.ServiceAddress.State + " " + data.ServiceAddress.Postal_Code + " " + data.ServiceAddress.Care_Of + '</div>';
+                    }
+                }
+
+                var ac_no_selected = $(".account-info .account-no").text();
+
+                var accountSelectorDataTable = $('#account-selector-table-more-than-5').DataTable({
+
+
+
+                    dom: 'Bfrtip',
+                    "destroy": true,
+                    ajax: {
+                        url: _manageAccountUrl,
+                        dataSrc: 'accountselector',
+                        processing: true,
+                    },
+                    serverside: true,
+                    "language": {
+                        "lengthMenu": "Display _MENU_ records per page",
+                        "zeroRecords": "No records available",
+                        //"info": _documentTransactionInfo,
+                        "infoEmpty": "No records available"
+                            //"infoFiltered": _documentTransactionFilterInfo
+                    },
+
+                    "order": [
+                        [0, 'desc'],
+                        [1, 'desc'],
+                        [2, 'desc'],
+                        [3, 'desc'],
+                        [4, 'desc']
+                    ],
+                    "columnDefs": [ // hide column
+
+                        {
+                            "targets": [5],
+                            "visible": false,
+                            "searchable": false
+                        }
+                    ],
+                    //accountSelectorDataTable.order([0,'asc']).draw(); 
+                    // "searching": false,
+
+
+                    columns: [{
+                            "data": "AccountStatus",
+                            "render": function(data, type, row, meta) {
+
+                                switch (data) {
+                                    case 'Active':
+                                        if ((row.PastDueAmount > 0) || (row.DunningStatus >= 5)) { // dunning & past Due amount account icon
+                                            return '<i class="activity-icon fa fa-warning"></i>' + row.AccountStatus;
+                                        } else if (row.AccountType == "Commercial") {
+                                            // return '<img src="/Content/pse/images/icon-commercial.png" alt="commercial"  class="activity-icon">'+row.AccountStatus;
+                                            return '<img src="~/media/Project/PSE/Portal/AccountSelector/icon-commercial.png" alt="Commercial"  class="activity-icon">' + row.AccountStatus;
+                                        } else if (row.AccountType == "Residential") {
+                                            // return '<img src="/Content/pse/images/icon-residential.png" alt="Residential"  class="activity-icon">'+row.AccountStatus;  // uncomment for this for checking in fed dev 
+                                            return '<img src="~/media/Project/PSE/Portal/AccountSelector/icon-residential.png" alt="Residentials"  class="activity-icon">' + row.AccountStatus;
+                                        }
+
+                                        // break;
+                                    case 'Closed':
+                                        return '<i class="activity-icon fa fa-warning"></i>' + row.AccountStatus;
+                                        break;
+
+                                    default:
+                                        return 'NA';
+                                }
+
+                            }
+                        },
+                        {
+                            "data": "ContractAccountId",
+                            "render": function(data, type, row, meta) {
+
+                                return '<p class="accountnum">' + row.ContractAccountId + '</p>';
+                            }
+                        },
+
+                        {
+                            "data": getMailingAddress
+
+                        },
+                        {
+                            "data": "DueDate",
+                            "render": function(data, type, row, meta) {
+                                //var date= data.DueDate;
+                                if (row.DueDate == null) {
+                                    return "NA"
+                                } else {
+                                    var date = new Date(data);
+                                    var month = date.getMonth() + 1;
+                                    var day = date.getDate();
+                                    var year =date.getFullYear();
+                                    var yearformat = (year <= 9 ? "000" + year : (year >= 10 && year <= 99 )? "00" + year : (year >= 100 && year <= 999 ) ? "0" + year : year);
+                                    return (month <= 9 ? "0" + month : month ) + "/" + (day <= 9 ? "0" + day : day ) + "/" + yearformat;
+                                    
+                                     // return row.DueDate;
+                                }
+
+                            }
+                        },
+
+                        {
+                            "data": "AmountDue",
+                            "render": function(data, type, row, meta) {
+                                return commaSeparateNumber(row.AmountDue);
+                            }
+                        },
+                        {
+                            "data": "PastDueAmount",
+                            "render": function(data, type, row, meta) {
+
+                                return '<p>' + row.PastDueAmount + '</p>';                
+                            }
+                        },
+                        {
+                            "data": "AmountDue",
+                            "render": function(data, type, row, meta) {
+                                return '<button class="pse-form-btn" type="submit" data-toggle="modal" data-target="#select-payment-option" > Pay Now<i class="fa fa-chevron-right"></i></button>';
+                                
+                                // commented the script as per new requirement 4063.
+                                // if (row.AmountDue <= 0) { 
+                                //     return '';
+                                // } else if (row.ContractAccountId == ac_no_selected) {
+                                //     return '';
+                                // } else {
+                                //     return '<button class="pse-form-btn" type="submit" data-toggle="modal" data-target="#select-payment-option" > Pay Now<i class="fa fa-chevron-right"></i></button>';
+                                // }
+
+                                if ($(window).width() < 767) {
+                                    return '<button class="pse-form-btn" type="submit" > Pay Now <i class="fa fa-chevron-right"></i></button>';
+                                }
+
+
+
+
+                            }
+                        }
+
+                    ],
+
+                    "fnRowCallback": function(nRow, aData, iDisplayIndex, iDisplayIndexFull, x) {
+                        // console.log("data" + aData.Status);
+                        switch (aData.AccountStatus) {
+                            case 'Closed':
+
+                                $(nRow).addClass("inactive");
+                                break;
+                        }
+                        if (aData.ContractAccountId == ac_no_selected) {
+                            $(nRow).attr('id', 'selected-account');
+                            // $(nRow).append($('#account-selector-table-more-than-5'));
+                            // $('#account-selector-table-more-than-5').after($(nRow));
+
+                            // $('#account-selector-table-more-than-5').prepend($(nRow));
+                        }
+                    },
+                    initComplete: function() {
+                        // $('table#account-selector-table-more-than-5 tbody tr:first td:last-child').text("");
+                        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_1");
+                        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_2");
+                        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_3");
+                        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_4");
+                        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_5");
+
+                        // console.log(accountSelectorDataTable.data().count());
+                        if (accountSelectorDataTable.data().count() <= 10) {
+                            $(".dt-more-container").hide();
+                            // $(".dataTables_filter").attr("style", "display: none !important");
+                            $('#account-selector-table-more-than-5_filter').addClass("hide");
+
+                        } else if (accountSelectorDataTable.data().count() >= 11) {
+                            $('#account-selector-table-more-than-5_filter').removeClass("hide");
+                        }
+
+                        var api = this.api();
+
+                        // Populate a dataset for autocomplete functionality
+                        // using data from first, second and third columns
+                        api.cells('tr', [1, 2]).every(function() {
+                            // Get cell data as plain text
+                            var data = $('<div>').html(this.data()).text();
+                            if (dataSrc.indexOf(data) === -1) {
+                                dataSrc.push(data);
+                            }
+                        });
+
+                        // Sort dataset alphabetically
+                        // dataSrc.sort();
+
+                        // Sort by column past due amount 
+                        accountSelectorDataTable.order([5, 'desc']).draw();
+
+
+                        $('#account-selector-table-more-than-5_filter input[type="search"]').unbind();
+
+                        // Initialize Typeahead plug-in
+                        $('#account-selector-table-more-than-5_filter input[type="search"]', api.table().container())
+                            .typeahead({
+                                source: dataSrc,
+                                autoSelect: false, // disable auto select in searchbox
+                                afterSelect: function(value) {
+
+                                    // $(".table-search").attr("title", value);
+                                    api.search(value).draw();
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_1");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_2");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_3");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_4");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_5");
+
+                                },
+
+                            });
+
+                        $('#account-selector-table-more-than-5_filter input[type="search"]').bind("keyup", function(x) {
+                            var key = x.keyCode || x.which;
+                            if (key == 13) {
+                                if ($(x.target).val() === "") {
+                                    accountSelectorDataTable.search($(x.target).val()).draw();
+                                } else {
+                                    var myValue = $(".table-search").val();
+                                    $accountselectortable.DataTable().search(myValue).draw();
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_1");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_2");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_3");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_4");
+                                    $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_5");
+                                }
+                            }
+                        });
+
+                    },
+                    buttons: [{
+                        extend: 'csv',
+                        className: "hide",
+                        filename: "document history",
+                    }],
+                    drawCallback: function() {
+                        $('#account-selector-load-more').toggle(this.api().page.hasMore());
+                    }
+                });
+                var input = $('.account-selector-manage #account-selector-table-more-than-5_filter label input');
+                $('.account-selector-manage #account-selector-table-more-than-5_filter label').addClass("text-hide");
+                input.addClass("table-search form-control");
+                input.parents("#account-selector-table-more-than-5_filter").addClass("hide");
+                input.attr("placeholder", "Search Account Number or Address");
+                input.after("<span class='Icon-search'><i class='fa fa-search'></i></span>");
+
+
+            }
+            renderAccountSelectorData();
+        }
+    }
+    $('#account-selector-load-more').on('click', function() {
+        $accountselectortable.DataTable().page.loadMore();
+        setTimeout(
+            function() {
+                if (!$('#account-selector-load-more').is(':visible')) {
+                    $('#account-selector-load-more').parent().css("border-bottom", "none");
+                }
+            },
+            500);
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_1");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_2");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_3");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_4");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_5");
+    });
+
+    $('#account-selector-table-more-than-5_filter span.Icon-search').on("click", function() {
+        // console.log("clicked");
+        var myValue = $(".table-search").val();
+        // regExSearch = '^\\s'+myValue +'\\s*$';
+        // regExSearch = '^myValue$';
+        // table.column(columnNo).search(regExSearch, true, false).draw();
+
+
+        $accountselectortable.DataTable().search(myValue).draw();
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_1");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_2");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_3");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_4");
+        $('table#account-selector-table-more-than-5 tbody tr td').removeClass("sorting_5");
+
+
+
+
+    });
+
+
+
+    $('#account-selector-table-more-than-5 tbody').on('click', 'tr td', function(x) {
+        //$(this).attr('id','selected');
+        //$(this).addClass("hide");
+        var accountnum = $(this).parent().find('.accountnum').text();
+        $("#txtAcctNumber").val(accountnum); // passing account number to payment gateway forpayment
+        // var _selectedAccountUrl;
+        var _accountSelectorUrl = '/api/AccountSelector/GetContractAccountJson';
+        var _selectedAccountUrl = '/api/AccountSelector/AccountCard';
+        var _myaccountUrl = _myAccountUrl;
+        if ($(this).find("button").length == 0) {
+            $.ajax({
+                url: _selectedAccountUrl,
+                type: 'POST',
+                datatype: "json",
+                contenttype: 'application/json; charset=utf-8',
+                data: {
+                    contractAccountNum: accountnum
+                },
+                context: this,
+                success: function(data) {
+                    window.location.href = _myaccountUrl;
+
+                    // location.reload(); //commented as per new changes 2826
+
+                },
+                error: function(xhr) {
+                    console.log('error');
+                }
+            });
+
+        }
+    });
+});
+
+function commaSeparateNumber(val) {
+    // while (/(\d+)(\d{3})/.test(val.toString())) {
+    //     val = val.toString().replace(/(\d+)(\d{3})/, '$1'+','+'$2');
+
+
+    //     //alert(res);
+    // }
+    // var res = val.split(".");
+
+    // console.log("the length" + res.length);
+    //console.log("sdjfkjsdk" + typeof(val));
+    // var res = parseFloat(val).toFixed(2);
+    //val = +val.toFixed(2);
+    return "$" + parseFloat(val).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,');
+
+}
+
+
+
+selector manage table
+
+$(document).ready(function () {
+    // sitecore has to comment this line var _manageAccountApiUrl
+    // var _accountSelectorUrl = '../../../src/js/data/account-selector/document-history2.json';
+       if(typeof _accountSelectorUrl != "undefined") {
+       
+       var words = [];
+       var dataSrc = [];
+   
+   
+    //    $.ajax({
+    //        url: _accountSelectorUrl,
+    //        success: function (data) {
+    //            //alert("success");
+    //        }
+    //    });
+       var ac_no_selected = $(".account-info .account-no").text();
+   
+       var accountdetails = $('#account-details').DataTable({
+           "pageLength": 4,
+           "info": false,
+           "ordering": true,
+   
+           ajax: {
+               url: _accountSelectorUrl,
+               dataSrc: 'accountselector',
+               processing: true,
+           },
+           "columnDefs": [ // hiding pastdueamt column for sorting in desc 
+            {
+                "targets": [ 3 ],
+                "visible": false,
+                "searchable": false
+            }
+        ] ,
+           "columns": [
+   
+               {
+                   "data": "AccountStatus",
+                   "render": function (data, type, row, meta) {
+                    var comm_icon="~/media/Project/PSE/Portal/AccountSelector/icon-commercial.png";
+                    //var comm_icon="/Content/pse/images/icon-commercial.png"; //uncomment when u are checking locally in fed site
+                    var res_icon="~/media/Project/PSE/Portal/AccountSelector/icon-residential.png";
+                    //var res_icon="/Content/pse/images/icon-residential.png"; //uncomment when u are checking locally in fed site
+                    var L1 = row.ServiceAddress.Line_1;
+                    var L2 = row.ServiceAddress.Line_2;
+                    var City = row.ServiceAddress.City;
+                    var State = row.ServiceAddress.State;
+                    var Po_code = row.ServiceAddress.Postal_Code;
+                    var Cr_of = row.ServiceAddress.Care_Of;
+                    
+                       switch (data) {
+                           case 'Active':
+                           if ((row.PastDueAmount > 0) || (row.DunningStatus >= 5)) { // dunning & past Due amount account icon
+                                if (row.ServiceAddress  ==  null) {
+                                    return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                                }else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of == null ) {
+                                    return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                                } // these condition is only when careof having null data
+                                else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of.trim() == "" ) {
+                                    return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                                }// checking empty values
+                                else if (L1 == null  &&  L2 == null  &&  City == null && State == null &&  Po_code == null && Cr_of == null ) {
+                                    return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                                } // checking null values
+                                else if ((L2.trim() == "" && Cr_of == "") || (L2.trim() == "" && Cr_of == null)) {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';   
+                                }else if (L1.trim() == "" && L2.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                }else if (L1 == null && L2 == null) {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                }else if (L1 == null || L1.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                }else if (L2 == null || L2.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                }else if (City == null || City.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                }else if (State == null || State.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+Po_code+" "+Cr_of+'</span></p>';
+                                }else if (Po_code == null || Po_code.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+"" +  ','+""+State+" "+Cr_of+'</span></p>';
+                                }else if (Cr_of == null || Cr_of.trim() == "") {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1.trim()+" "+L2.trim()+""+', '+""+City.trim()+""+', '+""+State.trim()+" "+Po_code.trim()+'</span></p>';
+                                }else {
+                                    return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                }
+                            }
+                            else if(row.AccountType == "Commercial"){
+                                   if (row.ServiceAddress  ==  null) {                     
+                                       return  '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   }else if (L1.trim() == "" &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of == null ) {
+                                       return  '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   } // these condition is only for asreg10 data
+                                   else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of.trim() == "" ) {
+                                       return  '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   }// checking empty values
+                                   else if (L1 == null  &&  L2 == null  &&  City == null && State == null &&  Po_code == null && Cr_of == null ) {
+                                       return  '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   } // checking null values
+                                   else if ((L2.trim() == "" && Cr_of == "") || (L2.trim() == "" && Cr_of == null)) {
+                                    return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';                
+                                    }// checking null values line_2 & careof values is null or empty
+                                   else if (L1 == null || L1.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+ L2 +""+', '+""+City+""+', '+""+State +" "+Po_code+" "+Cr_of+'</span></p>';
+                                   }else if (L2 == null || L2.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                   } else if (City  == null || City.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                   } else if (State == null || State.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+Po_code+" "+Cr_of+'</span></p>';
+                                   } else if (Po_code == null || Po_code.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Cr_of+'</span></p>';
+                                   }else if (Cr_of == null || Cr_of.trim() == "") {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';
+                                   } else {
+                                       return '<p class="acc-status"><img src='+comm_icon+' alt="commercial"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                   }
+                               }
+                            else if(row.AccountType == "Residential") {  
+                                   if (row.ServiceAddress  ==  null) {                     
+                                       return  '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   }else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of == null ) {
+                                       return  '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   } // these condition is only for when care of having null data
+                                   else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of.trim() == "" ) {
+                                       return  '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   }// checking empty values
+                                   else if (L1 == null  &&  L2 == null  &&  City == null && State == null &&  Po_code == null && Cr_of == null ) {
+                                       return  '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';
+                                   } // checking null values
+                                   else if ((L2.trim() == "" && Cr_of == "") || (L2.trim() == "" && Cr_of == null)) {
+                                    return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';                
+                                    }// checking null values line_2 & careof values is null or empty
+                                   else if (L1.trim() == ""  &&  L2.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">' +  City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                   }else if (L1 == null && L2 == null) {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">' +  City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                   }else if (L1 == null || L1.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+ L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                   } else if (L2 == null || L2.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                   } else if (City == null || City.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                                   } else if (State == null || State.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+Po_code+" "+Cr_of+'</span></p>';
+                                   } else if (Po_code == null || Po_code.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Cr_of+'</span></p>';
+                                   } else if (Cr_of == null || Cr_of.trim() == "") {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';
+                                   } else {
+                                       return '<p class="acc-status"><img src='+res_icon+' alt="Residential"  class="status-icon"><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                                   }
+                               }
+                               
+                               // break;
+                           case 'Closed':
+                               if (row.ServiceAddress  ==  null) {
+                                   return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                               }else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of == null ) {
+                                   return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                               } // these condition is only when careof having null data
+                               else if (L1.trim() == ""  &&  L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of.trim() == "" ) {
+                                   return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                               }// checking empty values
+                               else if (L1 == null  &&  L2 == null  &&  City == null && State == null &&  Po_code == null && Cr_of == null ) {
+                                   return  '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="address-null visible-xs">NA</span></p>';            
+                               } // checking null values
+                               else if ((L2.trim() == "" && Cr_of == "") || (L2.trim() == "" && Cr_of == null)) {
+                                return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+'</span></p>';   
+                                }
+                               else if (L1.trim() == "" && L2.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                               }else if (L1 == null && L2 == null) {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                               }else if (L1 == null || L1.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                               } else if (L2 == null || L2.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                               } else if (City == null || City.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';
+                               } else if (State == null || State.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+Po_code+" "+Cr_of+'</span></p>';
+                               } else if (Po_code == null || Po_code.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+"" +  ','+""+State+" "+Cr_of+'</span></p>';
+                               } else if (Cr_of == null || Cr_of.trim() == "") {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1.trim()+" "+L2.trim()+""+', '+""+City.trim()+""+', '+""+State.trim()+" "+Po_code.trim()+'</span></p>';
+                               }else {
+                                   return '<p class="acc-status"><i class="status-icon fa fa-warning"></i><span>' + row.AccountStatus + '</span><span class="visible-xs mobile-address">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</span></p>';                
+                               }
+                               //return '<p><i class="status-icon fa fa-warning"></i><span>'+ row.AccountStatus + '</span><span class="visible-xs mobile-address">' + L1 + " " + L2 + " " + City + " " + State + " "+ row.ServiceAddress.Country + " " + Po_code + '</span></p>';
+                               // break;
+                           default:
+                               return '';
+                       }
+   
+                   }
+               },
+               {
+                   "data": "ContractAccountId",
+                   "render": function (data, type, row, meta) {
+                       return '<p class="accountnum">' + row.ContractAccountId + '</p>'
+                   }
+               },
+               {
+                   
+                   "data": "ServiceAddress",
+                   "render": function (data, type, row, meta) {
+                    var L1 = row.ServiceAddress.Line_1;
+                    var L2 = row.ServiceAddress.Line_2;
+                    var City = row.ServiceAddress.City;
+                    var State = row.ServiceAddress.State;
+                    var Po_code = row.ServiceAddress.Postal_Code;
+                    var Cr_of = row.ServiceAddress.Care_Of;
+
+                       if (row.ServiceAddress  ==  null) {                    
+                           return  '<p class="acc-status hidden-xs">NA</p>';                
+                       }else if (L1.trim() == "" && L2.trim() == "" && City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of == null ) {
+                           return  '<p class="acc-status hidden-xs">NA</p>';
+                       } // these condition is only when othes values empty only caref of having null values 
+                       else if (L1.trim() == ""  && L2.trim() == ""  &&  City.trim() == "" && State.trim() == "" &&  Po_code.trim() == "" && Cr_of.trim() == "" ) {
+                           return  '<p class="acc-status hidden-xs">NA</p>';
+                       }// checking empty values
+                       else if (L1 == null  &&  L2 == null && City == null && State == null &&  Po_code == null && Cr_of == null ) {
+                           return  '<p class="acc-status hidden-xs">NA</p>';
+                       } // checking null values
+                        else if ((L2.trim() == "" && Cr_of == "") || (L2.trim() == "" && Cr_of == null)) {
+                        return  '<p class="acc-status hidden-xs">'+L1+""+', '+""+City+""+', '+""+State+" "+Po_code+'</p>'                
+                        }
+                       else if (L1.trim() == ""  &&  L2.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">' + City +""+', '+""+State+" "+Po_code+ " "+Cr_of+'</p>'
+                       }else if (L1 ==  null && L2 == null) {
+                           return  '<p class="acc-status hidden-xs">'+City+""+', '+""+State+" "+Po_code+ " "+Cr_of+'</p>'
+                       }else if (L1 ==  null || L1.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">'+ L2+" "+', '+""+City+""+', '+""+State+" "+Po_code+ " "+Cr_of +'</p>'
+                       } else if (L2 ==  null || L2.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">'+L1+" "+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of +'</p>'                
+                       } else if (City  ==  null || City.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">'+L1+" "+L2+""+', '+""+State+" "+Po_code+" "+Cr_of + '</p>'
+                       } else if (State ==  null || State.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">' + L1+" "+L2+""+', '+""+City+" "+', '+""+Po_code+ " "+Cr_of+'</p>'
+                       } else if (Po_code ==  null || Po_code.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Cr_of+'</p>'
+                       }else if (Cr_of ==  null || Cr_of.trim() == "") {
+                           return  '<p class="acc-status hidden-xs">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+'</p>'
+                       }
+                       else {
+                           return  '<p class="acc-status hidden-xs">'+L1+" "+L2+""+', '+""+City+""+', '+""+State+" "+Po_code+" "+Cr_of+'</p>'
+                       }
+                   }
+               },
+               {
+                "data": "PastDueAmount",
+                "render": function(data, type, row, meta) {
+                        return '<p>' + row.PastDueAmount + '</p>';                
+                }
+            }
+           ],
+   
+           "fnRowCallback": function (nRow, aData, iDisplayIndex, iDisplayIndexFull) {
+               switch (aData.AccountStatus) {
+                   case 'Closed':
+                       $(nRow).addClass("inactive");
+                       break;
+               }
+   
+               if (aData.ContractAccountId == ac_no_selected) {
+                   $(nRow).attr('id', 'selected-account');
+   
+               }
+           },
+           initComplete: function () {
+               // past due amount column sort by Desc Order
+            accountdetails.order([3,'desc']).draw();
+                // hiding row based on what account selected on account header
+               $('#account-details').DataTable().row("#selected-account").remove().draw();
+               if ($('#account-details').DataTable().data().count() <= 4) {
+                   $(".link-view-account").hide();
+               }
+           
+           }
+       });
+       $('#account-details tbody').on('click', 'tr', function (x) {
+   
+           var accountnum = $(this).find('.accountnum').text();
+           var _selectedAccountUrl;
+   
+           $.ajax({
+               url: _selectedAccountUrl,
+               type: 'POST',
+               datatype: "json",
+               contenttype: 'application/json; charset=utf-8',
+               data: {
+                   contractAccountNum: accountnum
+               },
+               context: this,
+               success: function (data) {
+                   // console.log("accounted selected");
+                   window.location.reload();
+   
+               },
+               error: function (xhr) {
+                   console.log('error');
+               }
+           });
+       });
+       }
+   });
+
